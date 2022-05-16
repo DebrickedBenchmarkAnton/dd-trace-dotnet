@@ -104,7 +104,7 @@ namespace Datadog.Trace.IntegrationTests
         private static ITelemetryTransport GetAgentOnlyTransport(Uri telemetryUri)
         {
             var transport = TelemetryTransportFactory.Create(
-                new TelemetrySettings(telemetryEnabled: true, configurationError: null, agentlessSettings: null),
+                new TelemetrySettings(telemetryEnabled: true, configurationError: null, agentlessSettings: null, agentProxyEnabled: true),
                 new ImmutableExporterSettings(new ExporterSettings { AgentUri = telemetryUri }));
             transport.Should().HaveCount(1);
             transport[0].Should().BeOfType<AgentTelemetryTransport>();
