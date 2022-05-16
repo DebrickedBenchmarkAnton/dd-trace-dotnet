@@ -53,11 +53,6 @@ namespace Datadog.Trace.Telemetry.Transports
                     return TelemetryPushResult.Success;
                 }
 
-                if (HandleErrorResponse(response) is { } result)
-                {
-                    return result;
-                }
-
                 if (response.StatusCode == 404)
                 {
                     Log.Debug("Error sending telemetry: 404. Disabling further telemetry, as endpoint '{Endpoint}' not found", GetEndpointInfo());
@@ -97,7 +92,5 @@ namespace Datadog.Trace.Telemetry.Transports
                        or WebException { Response: HttpWebResponse { StatusCode: HttpStatusCode.NotFound } }
                        or WebException { InnerException: SocketException };
         }
-
-        protected abstract TelemetryPushResult? HandleErrorResponse(IApiResponse apiResponse);
     }
 }
