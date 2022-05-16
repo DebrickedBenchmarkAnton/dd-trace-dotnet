@@ -6,6 +6,7 @@
 #nullable enable
 
 using System;
+using Datadog.Trace.Ci;
 using Datadog.Trace.Configuration;
 using Datadog.Trace.Util;
 
@@ -13,11 +14,12 @@ namespace Datadog.Trace.Telemetry
 {
     internal class TelemetrySettings
     {
-        public TelemetrySettings(bool telemetryEnabled, string? configurationError, AgentlessSettings? agentlessSettings)
+        public TelemetrySettings(bool telemetryEnabled, string? configurationError, AgentlessSettings? agentlessSettings, bool agentProxyEnabled)
         {
             TelemetryEnabled = telemetryEnabled;
             ConfigurationError = configurationError;
             Agentless = agentlessSettings;
+            AgentProxyEnabled = agentProxyEnabled;
         }
 
         /// <summary>
@@ -30,14 +32,20 @@ namespace Datadog.Trace.Telemetry
 
         public AgentlessSettings? Agentless { get; }
 
-        public static TelemetrySettings FromDefaultSources() => FromSource(GlobalSettings.CreateDefaultConfigurationSource());
+        public bool AgentProxyEnabled { get; }
 
-        public static TelemetrySettings FromSource(IConfigurationSource? source)
+        public static TelemetrySettings FromDefaultSources()
+            => FromSource(GlobalSettings.CreateDefaultConfigurationSource(), () => AgentAvailableEnabled());
+
+        public static TelemetrySettings FromSource(IConfigurationSource? source, Func<bool?> isAgentAvailable)
         {
             string? configurationError = null;
 
             var apiKey = source?.GetString(ConfigurationKeys.ApiKey);
             var agentlessExplicitlyEnabled = source?.GetBool(ConfigurationKeys.Telemetry.AgentlessEnabled);
+            var agentProxyEnabled = source?.GetBool(ConfigurationKeys.Telemetry.AgentlessEnabled)
+                                 ?? isAgentAvailable()
+                                 ?? true;
 
             var agentlessEnabled = false;
 
@@ -58,8 +66,9 @@ namespace Datadog.Trace.Telemetry
                 agentlessEnabled = !string.IsNullOrEmpty(apiKey);
             }
 
-            // enabled by default
-            var telemetryEnabled = source?.GetBool(ConfigurationKeys.Telemetry.Enabled) ?? true;
+            // enabled by default if we have any transports
+            var telemetryEnabled = source?.GetBool(ConfigurationKeys.Telemetry.Enabled)
+                                ?? (agentlessEnabled || agentProxyEnabled);
 
             AgentlessSettings? agentless = null;
             if (telemetryEnabled && agentlessEnabled)
@@ -93,7 +102,18 @@ namespace Datadog.Trace.Telemetry
                 agentless = new AgentlessSettings(agentlessUri, apiKey!);
             }
 
-            return new TelemetrySettings(telemetryEnabled, configurationError, agentless);
+            return new TelemetrySettings(telemetryEnabled, configurationError, agentless, agentProxyEnabled: agentProxyEnabled);
+        }
+
+        private static bool? AgentAvailableEnabled()
+        {
+            // if CIVisibility is enabled and in agentless mode, we probably don't have an agent available
+            if (CIVisibility.IsRunning && CIVisibility.Enabled)
+            {
+                return !CIVisibility.Settings.Agentless;
+            }
+
+            return null;
         }
 
         public class AgentlessSettings

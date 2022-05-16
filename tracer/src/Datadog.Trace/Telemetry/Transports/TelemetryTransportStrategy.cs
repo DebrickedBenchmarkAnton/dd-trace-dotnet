@@ -38,27 +38,27 @@ internal static class TelemetryTransportStrategy
         switch (strategy)
         {
             case TracesTransportType.WindowsNamedPipe:
-                Log.Information<string, string, int>("Using {FactoryType} for telemetry transport, with pipe name {PipeName} and timeout {Timeout}ms.", nameof(NamedPipeClientStreamFactory), settings.TracesPipeName, settings.TracesPipeTimeoutMs);
+                Log.Information<string, string, int>("Using {FactoryType} for telemetry transport to agent, with pipe name {PipeName} and timeout {Timeout}ms.", nameof(NamedPipeClientStreamFactory), settings.TracesPipeName, settings.TracesPipeTimeoutMs);
                 return new HttpStreamRequestFactory(new NamedPipeClientStreamFactory(settings.TracesPipeName, settings.TracesPipeTimeoutMs), DatadogHttpClient.CreateTelemetryAgentClient(), GetBaseEndpoint());
             case TracesTransportType.UnixDomainSocket:
 #if NET5_0_OR_GREATER
-                Log.Information("Using {FactoryType} for telemetry transport, with UDS path {Path}.", nameof(SocketHandlerRequestFactory), settings.TracesUnixDomainSocketPath);
+                Log.Information("Using {FactoryType} for telemetry transport to agent, with UDS path {Path}.", nameof(SocketHandlerRequestFactory), settings.TracesUnixDomainSocketPath);
                 return new SocketHandlerRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), TelemetryHttpHeaderNames.GetDefaultAgentHeaders(), GetBaseEndpoint());
 #elif NETCOREAPP3_1_OR_GREATER
-                Log.Information<string, string, int>("Using {FactoryType} for telemetry transport, with Unix Domain Sockets path {Path} and timeout {Timeout}ms.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath, settings.TracesPipeTimeoutMs);
+                Log.Information<string, string, int>("Using {FactoryType} for telemetry transport to agent, with Unix Domain Sockets path {Path} and timeout {Timeout}ms.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath, settings.TracesPipeTimeoutMs);
                 return new HttpStreamRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), DatadogHttpClient.CreateTelemetryAgentClient(), GetBaseEndpoint());
 #else
-                Log.Error("Using Unix Domain Sockets for telemetry transport is only supported on .NET Core 3.1 and greater. Falling back to default transport.");
+                Log.Error("Using Unix Domain Sockets for telemetry transport to agent is only supported on .NET Core 3.1 and greater. Falling back to default transport.");
                 goto case TracesTransportType.Default;
 #endif
             case TracesTransportType.Default:
             default:
                 var agentUri = UriHelpers.Combine(settings.AgentUri, TelemetryConstants.AgentTelemetryEndpoint);
 #if NETCOREAPP
-                Log.Information("Using {FactoryType} for telemetry transport.", nameof(HttpClientRequestFactory));
+                Log.Information("Using {FactoryType} for telemetry transport to agent.", nameof(HttpClientRequestFactory));
                 return new HttpClientRequestFactory(agentUri, TelemetryHttpHeaderNames.GetDefaultAgentHeaders(), timeout: Timeout);
 #else
-                Log.Information("Using {FactoryType} for telemetry transport.", nameof(ApiWebRequestFactory));
+                Log.Information("Using {FactoryType} for telemetry transport to agent.", nameof(ApiWebRequestFactory));
                 return new ApiWebRequestFactory(agentUri, TelemetryHttpHeaderNames.GetDefaultAgentHeaders(), timeout: Timeout);
 #endif
         }
