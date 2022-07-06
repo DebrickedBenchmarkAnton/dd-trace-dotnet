@@ -52,6 +52,7 @@ namespace Datadog.Trace.Ci.Agent
                 {
                     request = _apiRequestFactory.Create(tracesEndpoint);
                     request.AddHeader(ApiKeyHeader, CIVisibility.Settings.ApiKey);
+                    request.AddHeader("X-Datadog-EVP-Subdomain", payload.EvpSubdomain);
                 }
                 catch (Exception ex)
                 {

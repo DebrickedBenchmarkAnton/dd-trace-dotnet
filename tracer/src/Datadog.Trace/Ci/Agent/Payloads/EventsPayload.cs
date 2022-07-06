@@ -27,6 +27,10 @@ namespace Datadog.Trace.Ci.Agent.Payloads
 
         public abstract Uri Url { get; }
 
+        public abstract string EvpSubdomain { get; }
+
+        public abstract string EvpPath { get; }
+
         public bool HasEvents => _events.Count > 0;
 
         public int Count => _events.Count;

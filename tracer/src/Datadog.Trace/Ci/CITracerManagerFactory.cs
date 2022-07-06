@@ -68,9 +68,11 @@ namespace Datadog.Trace.Ci
             {
                 // With agent scenario:
 
+                return new CIAgentlessWriter(new CIWriterHttpSender(GetRequestFactory(settings)));
+
                 // Set the tracer buffer size to the max
-                var traceBufferSize = 1024 * 1024 * 45; // slightly lower than the 50mb payload agent limit.
-                return new CIAgentWriter(settings, sampler, traceBufferSize);
+                // var traceBufferSize = 1024 * 1024 * 45; // slightly lower than the 50mb payload agent limit.
+                // return new CIAgentWriter(settings, sampler, traceBufferSize);
             }
         }
 
