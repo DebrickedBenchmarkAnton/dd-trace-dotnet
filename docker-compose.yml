@@ -502,6 +502,24 @@ services:
       - IncludeMinorPackageVersions=${IncludeMinorPackageVersions:-false}
       - Verify_DisableClipboard=true
       - DiffEngine_Disabled=true
+      - DD_LOGGER_API_KEY
+      - DD_SERVICE
+      - DD_ENV
+      - TF_BUILD
+      - BUILD_DEFINITIONNAME
+      - BUILD_BUILDID
+      - BUILD_SOURCESDIRECTORY
+      - BUILD_REPOSITORY_URI
+      - BUILD_SOURCEBRANCH
+      - BUILD_SOURCEVERSION
+      - SYSTEM_TEAMFOUNDATIONSERVERURI
+      - SYSTEM_TEAMPROJECT
+      - SYSTEM_TEAMPROJECTID
+      - SYSTEM_JOBID
+      - SYSTEM_TASKINSTANCEID
+      - SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI
+      - SYSTEM_PULLREQUEST_SOURCEBRANCH
+      - SYSTEM_PULLREQUEST_SOURCECOMMITID
       - MONGO_HOST=mongo
       - SERVICESTACK_REDIS_HOST=servicestackredis:6379
       - STACKEXCHANGE_REDIS_HOST=stackexchangeredis:6379
@@ -573,6 +591,24 @@ services:
       - explorationTestName=${explorationTestName:-eshoponweb}
       - baseImage=${baseImage:-default}
       - DD_CLR_ENABLE_NGEN=${DD_CLR_ENABLE_NGEN:-1}
+      - DD_LOGGER_API_KEY
+      - DD_SERVICE
+      - DD_ENV
+      - TF_BUILD
+      - BUILD_DEFINITIONNAME
+      - BUILD_BUILDID
+      - BUILD_SOURCESDIRECTORY
+      - BUILD_REPOSITORY_URI
+      - BUILD_SOURCEBRANCH
+      - BUILD_SOURCEVERSION
+      - SYSTEM_TEAMFOUNDATIONSERVERURI
+      - SYSTEM_TEAMPROJECT
+      - SYSTEM_TEAMPROJECTID
+      - SYSTEM_JOBID
+      - SYSTEM_TASKINSTANCEID
+      - SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI
+      - SYSTEM_PULLREQUEST_SOURCEBRANCH
+      - SYSTEM_PULLREQUEST_SOURCECOMMITID
 
   StartDependencies:
     image: andrewlock/wait-for-dependencies
@@ -631,6 +667,24 @@ services:
       - IncludeMinorPackageVersions=${IncludeMinorPackageVersions:-false}
       - Verify_DisableClipboard=true
       - DiffEngine_Disabled=true
+      - DD_LOGGER_API_KEY
+      - DD_SERVICE
+      - DD_ENV
+      - TF_BUILD
+      - BUILD_DEFINITIONNAME
+      - BUILD_BUILDID
+      - BUILD_SOURCESDIRECTORY
+      - BUILD_REPOSITORY_URI
+      - BUILD_SOURCEBRANCH
+      - BUILD_SOURCEVERSION
+      - SYSTEM_TEAMFOUNDATIONSERVERURI
+      - SYSTEM_TEAMPROJECT
+      - SYSTEM_TEAMPROJECTID
+      - SYSTEM_JOBID
+      - SYSTEM_TASKINSTANCEID
+      - SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI
+      - SYSTEM_PULLREQUEST_SOURCEBRANCH
+      - SYSTEM_PULLREQUEST_SOURCECOMMITID
       - DD_CLR_ENABLE_NGEN=${DD_CLR_ENABLE_NGEN:-1}
       - MONGO_HOST=mongo_arm64
       - SERVICESTACK_REDIS_HOST=servicestackredis_arm64:6379
