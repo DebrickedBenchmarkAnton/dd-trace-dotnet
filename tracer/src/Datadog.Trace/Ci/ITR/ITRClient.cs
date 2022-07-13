@@ -68,11 +68,6 @@ internal partial class ITRClient
         }
 
         var remoteCommitsData = await SearchCommitAsync(localCommits).ConfigureAwait(false);
-        if (localCommits.Length == remoteCommitsData.Length && !localCommits.Except(remoteCommitsData).Any())
-        {
-            return 0;
-        }
-
         return await SendObjectsPackFileAsync(localCommits[0], remoteCommitsData).ConfigureAwait(false);
     }
 
@@ -194,7 +189,7 @@ internal partial class ITRClient
         commitsExceptions ??= Array.Empty<string>();
         var temporalPath = Path.GetTempFileName();
 
-        var getObjectsArguments = "log --format=format:%H%n%T --since=\"1 month ago\" HEAD " + string.Join(" ", commitsExceptions.Select(c => "^" + c));
+        var getObjectsArguments = "git rev-list --objects --no-object-names --filter=blob:none --since=\"1 month ago\" HEAD " + string.Join(" ", commitsExceptions.Select(c => "^" + c));
         var getObjects = await ProcessHelpers.RunCommandAsync(new ProcessHelpers.Command("git", getObjectsArguments, _workingDirectory)).ConfigureAwait(false);
         if (string.IsNullOrEmpty(getObjects))
         {

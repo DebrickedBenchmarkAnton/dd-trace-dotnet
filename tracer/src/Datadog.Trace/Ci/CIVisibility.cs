@@ -70,6 +70,7 @@ namespace Datadog.Trace.Ci
             Log.Information("Update and uploading git tree metadata.");
             var itrClient = new ITR.ITRClient(CIEnvironmentValues.Instance.WorkspacePath, _settings);
             var tskItrUpdate = itrClient.UploadRepositoryChangesAsync();
+            tskItrUpdate.ContinueWith(t => Log.Error(t.Exception, "Error in ITR UploadRepositoryChangesAsync"), TaskContinuationOptions.OnlyOnFaulted);
             LifetimeManager.Instance.AddAsyncShutdownTask(() => tskItrUpdate);
 
             // Initialize Tracer
