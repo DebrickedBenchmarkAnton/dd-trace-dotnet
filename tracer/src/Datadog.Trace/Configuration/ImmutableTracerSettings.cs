@@ -51,6 +51,7 @@ namespace Datadog.Trace.Configuration
             HeaderTags = new ReadOnlyDictionary<string, string>(settings.HeaderTags);
             GrpcTags = new ReadOnlyDictionary<string, string>(settings.GrpcTags);
             TracerMetricsEnabled = settings.TracerMetricsEnabled;
+            StatsComputationEnabled = settings.StatsComputationEnabled;
             RuntimeMetricsEnabled = settings.RuntimeMetricsEnabled;
             KafkaCreateConsumerScopeEnabled = settings.KafkaCreateConsumerScopeEnabled;
             StartupDiagnosticLogEnabled = settings.StartupDiagnosticLogEnabled;
@@ -76,6 +77,9 @@ namespace Datadog.Trace.Configuration
             _domainMetadata = DomainMetadata.Instance;
 
             ExpandRouteTemplatesEnabled = settings.ExpandRouteTemplatesEnabled || !RouteTemplateResourceNamesEnabled;
+
+            // tag propagation
+            TagPropagationHeaderMaxLength = settings.TagPropagationHeaderMaxLength;
         }
 
         /// <summary>
@@ -174,6 +178,11 @@ namespace Datadog.Trace.Configuration
         public bool TracerMetricsEnabled { get; }
 
         /// <summary>
+        /// Gets a value indicating whether stats are computed on the tracer side
+        /// </summary>
+        public bool StatsComputationEnabled { get; }
+
+        /// <summary>
         /// Gets a value indicating whether a span context should be created on exiting a successful Kafka
         /// Consumer.Consume() call, and closed on entering Consumer.Consume().
         /// </summary>
@@ -265,6 +274,16 @@ namespace Datadog.Trace.Configuration
         /// Gets a value indicating whether the activity listener is enabled or not.
         /// </summary>
         internal bool IsActivityListenerEnabled { get; }
+
+        /// <summary>
+        /// Gets the maximum length of an outgoing propagation header's value ("x-datadog-tags")
+        /// when injecting it into downstream service calls.
+        /// </summary>
+        /// <seealso cref="ConfigurationKeys.TagPropagation.HeaderMaxLength"/>
+        /// <remarks>
+        /// This value is not used when extracting an incoming propagation header from an upstream service.
+        /// </remarks>
+        internal int TagPropagationHeaderMaxLength { get; }
 
         /// <summary>
         /// Create a <see cref="ImmutableTracerSettings"/> populated from the default sources

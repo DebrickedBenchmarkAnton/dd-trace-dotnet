@@ -9,8 +9,16 @@
 #include <mutex>
 #include <signal.h>
 #include <sys/syscall.h>
+#include <unordered_map>
+#include <iomanip>
 
+#ifdef ARM64
+#include <libunwind-aarch64.h>
+#elif AMD64
 #include <libunwind-x86_64.h>
+#else
+error("unsupported architecture")
+#endif
 
 #include "Log.h"
 #include "ManagedThreadInfo.h"
@@ -29,7 +37,8 @@ LinuxStackFramesCollector* LinuxStackFramesCollector::s_pInstanceCurrentlyStackW
 LinuxStackFramesCollector::LinuxStackFramesCollector(ICorProfilerInfo4* const _pCorProfilerInfo) :
     _pCorProfilerInfo(_pCorProfilerInfo),
     _lastStackWalkErrorCode{0},
-    _stackWalkFinished{false}
+    _stackWalkFinished{false},
+    _errorStatistics{}
 {
     _pCorProfilerInfo->AddRef();
     InitializeSignalHandler();
@@ -37,12 +46,48 @@ LinuxStackFramesCollector::LinuxStackFramesCollector(ICorProfilerInfo4* const _p
 LinuxStackFramesCollector::~LinuxStackFramesCollector()
 {
     _pCorProfilerInfo->Release();
+    _errorStatistics.Log();
     // !! @ToDo: We must uninstall the signal handler!!
 }
 
 bool IsThreadAlive(::pid_t processId, ::pid_t threadId)
 {
     return syscall(SYS_tgkill, processId, threadId, 0) == 0;
+}
+
+bool LinuxStackFramesCollector::ShouldLogStats()
+{
+    static std::time_t PreviousPrintTimestamp = 0;
+    static const std::int64_t TimeIntervalInSeconds = 600; // print stats every 10min
+
+    time_t currentTime;
+    time(&currentTime);
+
+    if (currentTime == static_cast<time_t>(-1))
+    {
+        return false;
+    }
+
+    if (currentTime - PreviousPrintTimestamp < TimeIntervalInSeconds)
+    {
+        return false;
+    }
+
+    PreviousPrintTimestamp = currentTime;
+
+    return true;
+}
+
+void LinuxStackFramesCollector::UpdateErrorStats(std::int32_t errorCode)
+{
+    if (Log::IsDebugEnabled())
+    {
+        _errorStatistics.Add(errorCode);
+        if (ShouldLogStats())
+        {
+            _errorStatistics.Log();
+        }
+    }
 }
 
 StackSnapshotResultBuffer* LinuxStackFramesCollector::CollectStackSampleImplementation(ManagedThreadInfo* pThreadInfo,
@@ -119,11 +164,7 @@ StackSnapshotResultBuffer* LinuxStackFramesCollector::CollectStackSampleImplemen
     // * == 0 : success
     if (errorCode < 0)
     {
-        Log::Info("LinuxStackFramesCollector::CollectStackSampleImplementation:"
-                  " A problem occured while collecting a stack sample:",
-                  " ", ErrorCodeToString(errorCode), " (", errorCode, ").",
-                  " The stack sample collection may have been aborted, and the sample may",
-                  " be invalid, however the execution will continue normally.");
+        UpdateErrorStats(errorCode);
     }
 
     *pHR = (errorCode == 0) ? S_OK : E_FAIL;
@@ -316,4 +357,27 @@ void LinuxStackFramesCollector::CollectStackSampleSignalHandler(int signal)
     std::int32_t resultErrorCode = pCollectorInstanceCurrentlyStackWalking->CollectCallStackCurrentThread();
     stackWalkInProgressLock.unlock();
     pCollectorInstanceCurrentlyStackWalking->NotifyStackWalkCompleted(resultErrorCode);
+}
+
+void LinuxStackFramesCollector::ErrorStatistics::Add(std::int32_t errorCode)
+{
+    auto& value = _stats[errorCode];
+    value++;
+}
+
+void LinuxStackFramesCollector::ErrorStatistics::Log()
+{
+    if (!_stats.empty())
+    {
+        std::stringstream ss;
+        ss << std::setfill(' ') << std::setw(13) << "# occurrences" << "  |  " << "Error message\n";
+        for (auto& errorCodeAndStats : _stats)
+        {
+            ss << std::setfill(' ') << std::setw(10) << errorCodeAndStats.second << "  |  " << ErrorCodeToString(errorCodeAndStats.first) << " (" << errorCodeAndStats.first << ")\n";
+        }
+
+        Log::Info("LinuxStackFramesCollector::CollectStackSampleImplementation: The sampler thread encoutered errors in the interval\n",
+                  ss.str());
+        _stats.clear();
+    }
 }

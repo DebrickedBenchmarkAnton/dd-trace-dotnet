@@ -282,6 +282,11 @@ namespace Datadog.Trace.Configuration
         public const string ExpandRouteTemplatesEnabled = "DD_TRACE_EXPAND_ROUTE_TEMPLATES_ENABLED";
 
         /// <summary>
+        /// Configuration key for enabling computation of stats (aka trace metrics) on the tracer side
+        /// </summary>
+        public const string StatsComputationEnabled = "DD_TRACE_STATS_COMPUTATION_ENABLED";
+
+        /// <summary>
         /// Configuration key for setting the propagation style injection.
         /// </summary>
         public const string PropagationStyleInject = "DD_PROPAGATION_STYLE_INJECT";
@@ -444,6 +449,18 @@ namespace Datadog.Trace.Configuration
             /// <see cref="ExporterSettings.AgentUri"/> instead)
             /// </summary>
             public const string Uri = "DD_INSTRUMENTATION_TELEMETRY_URL";
+        }
+
+        internal static class TagPropagation
+        {
+            /// <summary>
+            /// Configuration key for the maximum length of an outgoing propagation header's value ("x-datadog-tags")
+            /// when injecting it into downstream service calls.
+            /// </summary>
+            /// <remarks>
+            /// This value is not used when extracting an incoming propagation header from an upstream service.
+            /// </remarks>
+            public const string HeaderMaxLength = "DD_TRACE_X_DATADOG_TAGS_MAX_LENGTH";
         }
     }
 }

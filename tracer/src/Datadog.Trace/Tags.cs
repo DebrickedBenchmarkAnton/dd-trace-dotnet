@@ -391,6 +391,11 @@ namespace Datadog.Trace
         internal const string Measured = "_dd.measured";
 
         /// <summary>
+        /// Marks a span as a partial snapshot.
+        /// </summary>
+        internal const string PartialSnapshot = "_dd.partial_version";
+
+        /// <summary>
         /// The name of the Msmq command the message was published to.
         /// </summary>
         internal const string MsmqCommand = "msmq.command";
@@ -487,6 +492,11 @@ namespace Datadog.Trace
             internal const string SessionId = "usr.session_id";
             internal const string Role = "usr.role";
             internal const string Scope = "usr.scope";
+        }
+
+        internal static class TagPropagation
+        {
+            internal const string Error = "_dd.propagation_error";
         }
     }
 }

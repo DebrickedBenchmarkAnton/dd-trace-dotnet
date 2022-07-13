@@ -108,6 +108,7 @@ namespace Datadog.Trace.Configuration
         public string ServiceName { get; }
         public string ServiceVersion { get; }
         public bool StartupDiagnosticLogEnabled { get; }
+        public bool StatsComputationEnabled { get; }
         public bool TraceEnabled { get; }
         public bool TracerMetricsEnabled { get; }
         public static Datadog.Trace.Configuration.ImmutableTracerSettings FromDefaultSources() { }
@@ -174,6 +175,7 @@ namespace Datadog.Trace.Configuration
         public string ServiceName { get; set; }
         public string ServiceVersion { get; set; }
         public bool StartupDiagnosticLogEnabled { get; set; }
+        public bool StatsComputationEnabled { get; set; }
         public bool TraceEnabled { get; set; }
         public bool TracerMetricsEnabled { get; set; }
         public Datadog.Trace.Configuration.ImmutableTracerSettings Build() { }
@@ -196,6 +198,7 @@ namespace Datadog.Trace
     }
     public static class HttpHeaderNames
     {
+        [System.Obsolete]
         public const string DatadogTags = "x-datadog-tags";
         public const string Origin = "x-datadog-origin";
         public const string ParentId = "x-datadog-parent-id";
@@ -345,6 +348,7 @@ namespace Datadog.Trace
         public string? Email { get; set; }
         public string Id { get; set; }
         public string? Name { get; set; }
+        public bool PropagateId { get; set; }
         public string? Role { get; set; }
         public string? Scope { get; set; }
         public string? SessionId { get; set; }

@@ -15,18 +15,6 @@
 #include "shared/src/native-src/loader.h"
 
 namespace OsSpecificApi {
-void InitializeLoaderResourceMonikerIDs(shared::LoaderResourceMonikerIDs* loaderResourceMonikerIDs)
-{
-    if (loaderResourceMonikerIDs == nullptr)
-    {
-        return;
-    }
-
-    loaderResourceMonikerIDs->Net45_Datadog_AutoInstrumentation_ManagedLoader_dll = NET45_Datadog_AutoInstrumentation_ManagedLoader_dll;
-    loaderResourceMonikerIDs->NetCoreApp20_Datadog_AutoInstrumentation_ManagedLoader_dll = NETCOREAPP20_Datadog_AutoInstrumentation_ManagedLoader_dll;
-    loaderResourceMonikerIDs->Net45_Datadog_AutoInstrumentation_ManagedLoader_pdb = NET45_Datadog_AutoInstrumentation_ManagedLoader_pdb;
-    loaderResourceMonikerIDs->NetCoreApp20_Datadog_AutoInstrumentation_ManagedLoader_pdb = NETCOREAPP20_Datadog_AutoInstrumentation_ManagedLoader_pdb;
-}
 
 std::unique_ptr<StackFramesCollectorBase> CreateNewStackFramesCollectorInstance(ICorProfilerInfo4* pCorProfilerInfo)
 {
@@ -128,9 +116,9 @@ bool IsRunning(ULONG threadState)
 {
     return
         (THREAD_STATE::Running == threadState) ||
-        (THREAD_STATE::Standby == threadState) ||
-        (THREAD_STATE::Ready == threadState) ||
-        (THREAD_STATE::DeferredReady == threadState);
+        (THREAD_STATE::DeferredReady == threadState) ||
+        (THREAD_STATE::Standby == threadState)
+        ;
 
     // Note that THREAD_STATE::Standby, THREAD_STATE::Ready and THREAD_STATE::DeferredReady
     // indicate that threads are simply waiting for an available core to run.

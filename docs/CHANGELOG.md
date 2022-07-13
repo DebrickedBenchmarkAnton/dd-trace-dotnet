@@ -4,6 +4,104 @@
 
 
 
+
+
+## [Release 2.12.0](https://github.com/DataDog/dd-trace-dotnet/releases/tag/v2.12.0)
+
+## Summary
+
+- [Tracer/ASM] Adds horizontal propagation, and enables optional user id propagation
+- [Profiler] Build for Linux Arm64
+- [Tracer] Add support for latest StackExchange.Redis release
+
+## Changes
+
+### Tracer
+* Propagate trace tags to downstream services (horizontal propagation) (#2897)
+* Clean the way we build the tracer native code on Linux (#2943)
+* Log the number of dropped spans when flushing the buffer (#2948)
+* Ensure we release cached StringBuilder instances back to the StringBuilderCache (#2956)
+* Allow user id to be propagated (#2968)
+* Add support for StackExchange.Redis 2.6.48 (#2959)
+
+### Continuous Profiler
+* [Profiler] Run profiler tests on .NET 6 (#2909)
+* [Profiler] Reenable sampling test (#2913)
+* [Profiler] Fix parsing thread information (#2929)
+* [Profiler] Disable walltime profiler during exception tests (#2935)
+* [Profiler] Do not dereference nullptr to avoid crashing (#2940)
+* [Profiler] Clean the way we build the profiler on Linux (#2942)
+* [Profiler] Remove profiler managed code (#2946)
+* [Profiler] Build and package the Profiler for Arm64 architecture (#2952)
+* [Profiler] Bump libddprof version to 0.6.0 (#2958)
+
+### Debugger
+* Add instrumented IL verification (#2829)
+
+### Build / Test
+* Setup Code Scanning for dd-trace-dotnet (#2286)
+* Add named pipe support to the mock agent + convert telemetry tests to Snapshot (#2816)
+* Add smoke tests for the distribution NuGet on Linux (#2878)
+* [Pipeline Monitoring] Make it run at the end in any case (#2890)
+* Save loader and profiler native symbols from GitLab (#2896)
+* [Test Package Versions Bump] Updating package versions (#2901)
+* [codeowners] Rename ci-app-tracers to ci-app-libraries (#2919)
+* Convert StackExchange.Redis to snapshots and add support for latest (#2921)
+* Fix changed error message in Kafka 1.9.0 (#2922)
+* Update usages of Newtonsoft.Json to 13.0.1 across test applications (#2923)
+* [Tracer] Convert SQS integration tests to snapshots (#2926)
+* [Tracer] Convert ServiceStackRedis integration tests to snapshots (#2927)
+* Fix NuGet installer smoke tests not running (#2928)
+* Allow queuing multiple connection for acceptance in UDS test agent (#2930)
+* [Build] Fix S3 upload (#2932)
+* [Tracer] Add throughput tests for stats computation (#2936)
+* Add smoke tests for the MSI installer (#2937)
+* Add smoke tests for windows-tracer-home.zip (#2941)
+* Add smoke tests for dotnet-tool instrumentation on Windows (#2944)
+* Add Smoke testing of the NuGet package on Windows (#2947)
+* Add smoke tests for dotnet-tool instrumentation on Linux (#2949)
+* Add support for alpine to the dd-trace tool (#2951)
+
+### Miscellaneous
+* Bump NuGet.CommandLine from 5.8.1 to 5.9.2 in /tracer/build/_build (#2907)
+* Exclude guid-like assembly names from telemetry (#2954)
+
+
+[Changes since 2.11.0](https://github.com/DataDog/dd-trace-dotnet/compare/v2.11.0...v2.12.0)
+
+## [Release 2.11.0](https://github.com/DataDog/dd-trace-dotnet/releases/tag/v2.11.0)
+
+## Summary
+
+- [Tracer Sampling] The tracing library no longer applies a default sampling rate of 100%. Instead, the library applies the sampling rates calculated in the Datadog Agent.
+- [Linux Packaging] Make the `createLogPath.sh` executable again (issue introduced in 2.10.0)
+
+## Changes
+
+### Tracer
+* Add support for computation of stats in the tracer (#2591)
+* [Tracer] Take into account the default sampling values sent by the agent (#2836)
+
+### CI App
+* [CIApp] MSBuild logger improvements (#2894)
+
+### Continuous Profiler
+* [Profiler] Add CPU scenario to profiler throughput tests (#2864)
+* [Profiler] Add iterator scenario in computer01 demo (#2889)
+* [Profiler] Do not print stack walker error messages everytime (#2902)
+* [Profiler] Don't sample if no CPU time was consumed nor in Ready state (#2903)
+
+### Miscellaneous
+* [Test Package Versions Bump] Updating package versions (#2877)
+
+### Build / Test
+* Replace use of semantic info with syntax-only check instead (#2892)
+* Rename `isScheduledBuild` to `isBenchmarksOnlyBuild` (#2893)
+* [Linux packaging] Make sure the createLogPath script is executable (#2911)
+
+
+[Changes since 2.10.0](https://github.com/DataDog/dd-trace-dotnet/compare/v2.10.0...v2.11.0)
+
 ## [Release 2.10.0](https://github.com/DataDog/dd-trace-dotnet/releases/tag/v2.10.0)
 
 ## Summary

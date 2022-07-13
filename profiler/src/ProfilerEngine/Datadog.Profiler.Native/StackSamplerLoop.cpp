@@ -161,7 +161,10 @@ void StackSamplerLoop::MainLoopIteration(void)
 {
     // In each iteration, a few threads (up to MaxThreadsPerIterationForWallTime) are sampled
     // to compute wall time.
-    WalltimeProfilingIteration();
+    if (_pConfiguration->IsWallTimeProfilingEnabled())
+    {
+        WalltimeProfilingIteration();
+    }
 
     // When CPU profiling is enabled, most of the threads (up to MaxThreadsPerIterationForCpuTime)
     // are scanned and if they are currently running, they are sampled.
@@ -233,10 +236,12 @@ void StackSamplerLoop::CpuProfilingIteration(void)
                 _targetThread->SetCpuConsumptionMilliseconds(currentConsumption);
                 uint64_t cpuForSample = currentConsumption - lastConsumption;
 
-                int64_t thisSampleTimestampNanosecs = OpSysTools::GetHighPrecisionNanoseconds();
-                CollectOneThreadStackSample(_targetThread, thisSampleTimestampNanosecs, cpuForSample, PROFILING_TYPE::CpuTime);
-
-                //std::this_thread::yield();
+                // we don't collect a sample for this thread is no CPU was consumed since the last check
+                if (cpuForSample > 0)
+                {
+                    int64_t thisSampleTimestampNanosecs = OpSysTools::GetHighPrecisionNanoseconds();
+                    CollectOneThreadStackSample(_targetThread, thisSampleTimestampNanosecs, cpuForSample, PROFILING_TYPE::CpuTime);
+                }
             }
             // don't yield until a thread to sample is found
 

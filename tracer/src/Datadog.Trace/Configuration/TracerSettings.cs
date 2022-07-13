@@ -11,7 +11,6 @@ using System.Text.RegularExpressions;
 using Datadog.Trace.ExtensionMethods;
 using Datadog.Trace.Logging.DirectSubmission;
 using Datadog.Trace.PlatformHelpers;
-using Datadog.Trace.Util;
 using Datadog.Trace.Vendors.Serilog;
 
 namespace Datadog.Trace.Configuration
@@ -116,6 +115,8 @@ namespace Datadog.Trace.Configuration
                                    // default value
                                    false;
 
+            StatsComputationEnabled = source?.GetBool(ConfigurationKeys.StatsComputationEnabled) ?? false;
+
             RuntimeMetricsEnabled = source?.GetBool(ConfigurationKeys.RuntimeMetricsEnabled) ??
                                     false;
 
@@ -182,6 +183,12 @@ namespace Datadog.Trace.Configuration
 
             // Filter out tags with empty keys or empty values, and trim whitespaces
             GrpcTags = InitializeHeaderTags(grpcTags, headerTagsNormalizationFixEnabled: true);
+
+            var propagationHeaderMaximumLength = source?.GetInt32(ConfigurationKeys.TagPropagation.HeaderMaxLength);
+
+            TagPropagationHeaderMaxLength = propagationHeaderMaximumLength is >= 0 and <= Tagging.TagPropagation.OutgoingPropagationHeaderMaxLength ?
+                                             (int)propagationHeaderMaximumLength :
+                                             Tagging.TagPropagation.OutgoingPropagationHeaderMaxLength;
 
             IsActivityListenerEnabled = source?.GetBool(ConfigurationKeys.FeatureFlags.ActivityListenerEnabled) ??
                                 // default value
@@ -309,6 +316,11 @@ namespace Datadog.Trace.Configuration
         public bool TracerMetricsEnabled { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether stats are computed on the tracer side
+        /// </summary>
+        public bool StatsComputationEnabled { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the use
         /// of System.Diagnostics.DiagnosticSource is enabled.
         /// Default is <c>true</c>.
@@ -341,6 +353,16 @@ namespace Datadog.Trace.Configuration
         /// Gets or sets a value indicating whether the diagnostic log at startup is enabled
         /// </summary>
         public bool StartupDiagnosticLogEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum length of an outgoing propagation header's value ("x-datadog-tags")
+        /// when injecting it into downstream service calls.
+        /// </summary>
+        /// <seealso cref="ConfigurationKeys.TagPropagation.HeaderMaxLength"/>
+        /// <remarks>
+        /// This value is not used when extracting an incoming propagation header from an upstream service.
+        /// </remarks>
+        internal int TagPropagationHeaderMaxLength { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating the injection propagation style.
