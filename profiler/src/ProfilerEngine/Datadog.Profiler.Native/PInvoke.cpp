@@ -70,8 +70,8 @@ extern "C" void* __stdcall GetPointerToNativeTraceContext()
         return nullptr;
     }
 
-    ManagedThreadInfo* pCurrentThreadInfo;
-    HRESULT hr = profiler->GetManagedThreadList()->TryGetCurrentThreadInfo(&pCurrentThreadInfo);
+    std::shared_ptr<ManagedThreadInfo> pCurrentThreadInfo;
+    HRESULT hr = profiler->GetManagedThreadList()->TryGetCurrentThreadInfo(pCurrentThreadInfo);
     if (FAILED(hr))
     {
         // There was an error looking up the current thread info:

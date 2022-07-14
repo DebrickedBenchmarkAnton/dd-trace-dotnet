@@ -89,7 +89,7 @@ public:
     inline std::list<Sample> GetSamples() override
     {
         std::list<TRawSample> input = FetchRawSamples();
-                
+
         return TransformRawSamples(input);
     }
 
@@ -187,9 +187,6 @@ private:
         }
         nameBuilder << " [#" << rawSample.ThreadInfo->GetOsThreadId() << "]";
         sample.SetThreadName(nameBuilder.str());
-
-        // don't forget to release the ManagedThreadInfo
-        rawSample.ThreadInfo->Release();
     }
 
     void SetStack(const TRawSample& rawSample, Sample& sample)
