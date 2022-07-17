@@ -32,15 +32,16 @@ private:
     static HRESULT WriteCallsToLogArgOrLocal(CorProfiler* corProfiler, DebuggerTokens* debuggerTokens, bool isStatic,
                                         const std::vector<TypeSignature>& methodArgsOrLocals, int numArgsOrLocals,
                                         ILRewriterWrapper& rewriterWrapper, ULONG callTargetStateIndex,
-                                             ILInstr** beginCallInstruction, bool isArgs, bool isMethodProbe);
+                                             ILInstr** beginCallInstruction, bool isArgs, ProbeType probeType);
     static HRESULT WriteCallsToLogArg(CorProfiler* corProfiler, DebuggerTokens* debuggerTokens, bool isStatic,
                                 const std::vector<TypeSignature>& args, int numArgs, ILRewriterWrapper& rewriterWrapper,
                                 ULONG callTargetStateIndex,
-                                ILInstr** beginCallInstruction, bool isMethodProbe);
+                                ILInstr** beginCallInstruction,
+                                ProbeType probeType);
     static HRESULT WriteCallsToLogLocal(CorProfiler* corProfiler, DebuggerTokens* debuggerTokens, bool isStatic,
                                   const std::vector<TypeSignature>& locals, int numLocals,
                                   ILRewriterWrapper& rewriterWrapper, ULONG callTargetStateIndex,
-                                        ILInstr** beginCallInstruction, bool isMethodProbe);
+                                        ILInstr** beginCallInstruction, ProbeType probeType);
     static HRESULT LoadInstanceIntoStack(FunctionInfo* caller, bool isStatic, const ILRewriterWrapper& rewriterWrapper, ILInstr** outLoadArgumentInstr);
     static HRESULT CallLineProbe(int instrumentedMethodIndex, CorProfiler* corProfiler, ModuleID module_id,
                                  ModuleMetadata& module_metadata, FunctionInfo* caller, DebuggerTokens* debuggerTokens,
@@ -64,6 +65,20 @@ private:
                           ULONG callTargetStateIndex, ULONG exceptionIndex, ULONG callTargetReturnIndex,
                           ULONG returnValueIndex, mdToken callTargetReturnToken, ILInstr* firstInstruction,
                              int instrumentedMethodIndex, ILInstr* const& beforeLineProbe, std::vector<EHClause>& newClauses) const;
+    static HRESULT EndAsyncMethodProbe(CorProfiler* corProfiler, ILRewriterWrapper& rewriterWrapper,
+                                       const ModuleMetadata& module_metadata,
+                                       DebuggerTokens* debuggerTokens, FunctionInfo* caller, bool isStatic,
+                                       const std::vector<TypeSignature>& methodLocals, int numLocals, ULONG callTargetStateIndex,
+                                       ULONG exceptionIndex, ULONG callTargetReturnIndex, std::vector<EHClause>& newClauses);
+    HRESULT ApplyAsyncMethodProbe(CorProfiler* corProfiler, ModuleID module_id, const ModuleMetadata& module_metadata,
+                                  FunctionInfo* caller, DebuggerTokens* debuggerTokens, mdToken function_token,
+                                  TypeSignature retFuncArg, bool isVoid, bool isStatic,
+                                  std::vector<TypeSignature> methodArguments,
+                                  int numArgs, const shared::WSTRING& methodProbeId, ILRewriter& rewriter,
+                                  const std::vector<TypeSignature>& methodLocals, int numLocals, ILRewriterWrapper& rewriterWrapper,
+                                  ULONG asyncMethodStateIndex, ULONG exceptionIndex, ULONG callTargetReturnIndex,
+                                  ULONG returnValueIndex, mdToken callTargetReturnToken, ILInstr* firstInstruction,
+                                  int instrumentedMethodIndex, ILInstr* const& beforeLineProbe, std::vector<EHClause>& newClauses) const;
 
     HRESULT Rewrite(RejitHandlerModule* moduleHandler, RejitHandlerModuleMethod* methodHandler,
                                                         MethodProbeDefinitions& methodProbes,
@@ -74,6 +89,9 @@ private:
 
 public:
     HRESULT Rewrite(RejitHandlerModule* moduleHandler, RejitHandlerModuleMethod* methodHandler) override;
+    static HRESULT IsTypeImplementIAsyncStateMachine(const ComPtr<IMetaDataImport2>& metadataImport, const ULONG32 typeToken);
+    HRESULT IsAsyncMethodProbe(const ComPtr<IMetaDataImport2>& metadataImport, const FunctionInfo* caller) const;
+    static HRESULT GetTaskReturnType(const ILInstr* instruction, const ComPtr<IMetaDataImport2>& metadataImport, const std::vector<TypeSignature>& methodLocals, TypeSignature* returnType);
 };
 
 } // namespace debugger

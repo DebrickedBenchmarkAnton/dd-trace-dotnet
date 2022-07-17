@@ -3,23 +3,24 @@ using System.Threading.Tasks;
 
 namespace Samples.Probes.SmokeTests
 {
-    internal class AsyncInstanceMethod : IAsyncRun
+    internal class AsyncRecursiveCall : IAsyncRun
     {
-        private const string ClassName = "AsyncInstanceMethod";
-
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public async Task RunAsync()
         {
-            await Method($"{ClassName}.{nameof(RunAsync)}");
+            await Recursive(0);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         [MethodProbeTestData]
-        public async Task<string> Method(string input)
+        public async Task<int> Recursive(int i)
         {
-            var output = input + ".";
-            await Task.CompletedTask;
-            return output + nameof(Method);
+            if (i == 8)
+            {
+                return i;
+            }
+
+            return await Recursive(++i);
         }
     }
 }

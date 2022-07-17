@@ -740,3 +740,18 @@ bool ILRewriter::IsBranchTarget(ILInstr* pInstr)
 {
     return s_OpCodeFlags[pInstr->m_opcode] & OPCODEFLAGS_BranchTarget;
 }
+
+bool ILRewriter::IsLoadLocalDirectInstruction(unsigned opcode)
+{
+    switch (opcode)
+    {
+        case CEE_LDLOC:
+        case CEE_LDLOC_0:
+        case CEE_LDLOC_1:
+        case CEE_LDLOC_2:
+        case CEE_LDLOC_3:
+        case CEE_LDLOC_S:
+        return true;
+        default:return false;
+    }
+}
