@@ -32,7 +32,6 @@
 #include "OsSpecificApi.h"
 #include "ProfilerEngineStatus.h"
 #include "RuntimeIdStore.h"
-#include "SamplesAggregator.h"
 #include "StackSamplerLoopManager.h"
 #include "ThreadsCpuManager.h"
 #include "WallTimeProvider.h"
@@ -140,7 +139,7 @@ bool CorProfilerCallback::InitializeServices()
     // i.e. the exporter is passed to the aggregator and each provider is added to the aggregator.
     _pExporter = std::make_unique<LibddprofExporter>(_pConfiguration.get(), _pApplicationStore);
 
-    _pSamplesCollector = RegisterService<SamplesCollector>(_pThreadsCpuManager);
+    _pSamplesCollector = RegisterService<SamplesCollector>(_pConfiguration.get(), _pThreadsCpuManager, _pExporter.get(), _metricsSender.get());
 
     if (_pConfiguration->IsWallTimeProfilingEnabled())
     {
@@ -156,8 +155,6 @@ bool CorProfilerCallback::InitializeServices()
     {
         _pSamplesCollector->Register(_pExceptionsProvider);
     }
-
-    _pSamplesAggregator = RegisterService<SamplesAggregator>(_pConfiguration.get(), _pThreadsCpuManager, _pExporter.get(), _metricsSender.get(), _pSamplesCollector);
 
     auto started = StartServices();
     if (!started)
@@ -620,7 +617,6 @@ HRESULT STDMETHODCALLTYPE CorProfilerCallback::Shutdown(void)
     _pStackSamplerLoopManager->Stop();
 
     _pSamplesCollector->Stop();
-    _pSamplesAggregator->Stop();
 
     // Calling Stop on providers transforms the last raw samples
     if (_pWallTimeProvider != nullptr)
