@@ -15,7 +15,6 @@ namespace Datadog.Trace.Agent
     internal static class TracesTransportStrategy
     {
         private static readonly IDatadogLogger Log = DatadogLogging.GetLoggerFor<Tracer>();
-        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
 
         public static IApiRequestFactory Get(ImmutableExporterSettings settings)
         {
@@ -44,10 +43,10 @@ namespace Datadog.Trace.Agent
                 default:
 #if NETCOREAPP
                     Log.Information("Using {FactoryType} for trace transport.", nameof(HttpClientRequestFactory));
-                    return new HttpClientRequestFactory(settings.AgentUri, AgentHttpHeaderNames.DefaultHeaders, timeout: Timeout);
+                    return new HttpClientRequestFactory(settings.AgentUri, AgentHttpHeaderNames.DefaultHeaders, timeout: TimeSpan.FromMilliseconds(settings.TracesTimeoutMs));
 #else
                     Log.Information("Using {FactoryType} for trace transport.", nameof(ApiWebRequestFactory));
-                    return new ApiWebRequestFactory(settings.AgentUri, AgentHttpHeaderNames.DefaultHeaders, timeout: Timeout);
+                    return new ApiWebRequestFactory(settings.AgentUri, AgentHttpHeaderNames.DefaultHeaders, timeout: TimeSpan.FromMilliseconds(settings.TracesTimeoutMs));
 #endif
             }
         }
