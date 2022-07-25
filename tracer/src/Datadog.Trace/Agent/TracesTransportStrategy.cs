@@ -32,7 +32,7 @@ namespace Datadog.Trace.Agent
                     // use http://localhost as base endpoint
                     return new SocketHandlerRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), AgentHttpHeaderNames.DefaultHeaders, new Uri("http://localhost"));
 #elif NETCOREAPP3_1_OR_GREATER
-                    Log.Information<string, string, int>("Using {FactoryType} for trace transport, with Unix Domain Sockets path {Path} and timeout {Timeout}ms.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath, settings.TracesPipeTimeoutMs);
+                    Log.Information<string, string>("Using {FactoryType} for trace transport, with Unix Domain Sockets path {Path}.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath);
                     // use http://localhost as base endpoint
                     return new HttpStreamRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), DatadogHttpClient.CreateTraceAgentClient(), new Uri("http://localhost"));
 #else

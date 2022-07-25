@@ -45,7 +45,7 @@ internal static class TelemetryTransportStrategy
                 Log.Information("Using {FactoryType} for telemetry transport, with UDS path {Path}.", nameof(SocketHandlerRequestFactory), settings.TracesUnixDomainSocketPath);
                 return new SocketHandlerRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), TelemetryHttpHeaderNames.GetDefaultAgentHeaders(), GetBaseEndpoint());
 #elif NETCOREAPP3_1_OR_GREATER
-                Log.Information<string, string, int>("Using {FactoryType} for telemetry transport, with Unix Domain Sockets path {Path} and timeout {Timeout}ms.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath, settings.TracesPipeTimeoutMs);
+                Log.Information<string, string>("Using {FactoryType} for telemetry transport, with Unix Domain Sockets path {Path} and timeout {Timeout}ms.", nameof(UnixDomainSocketStreamFactory), settings.TracesUnixDomainSocketPath);
                 return new HttpStreamRequestFactory(new UnixDomainSocketStreamFactory(settings.TracesUnixDomainSocketPath), DatadogHttpClient.CreateTelemetryAgentClient(), GetBaseEndpoint());
 #else
                 Log.Error("Using Unix Domain Sockets for telemetry transport is only supported on .NET Core 3.1 and greater. Falling back to default transport.");
