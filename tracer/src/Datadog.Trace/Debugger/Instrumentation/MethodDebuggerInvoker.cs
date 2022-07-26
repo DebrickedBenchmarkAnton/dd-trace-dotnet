@@ -36,7 +36,7 @@ namespace Datadog.Trace.Debugger.Instrumentation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static MethodDebuggerState BeginMethod_StartMarker<TTarget>(string probeId, TTarget instance, RuntimeMethodHandle methodHandle, RuntimeTypeHandle typeHandle, int methodMetadataIndex)
         {
-            if (ProbeRateLimiter.Instance.IsLimitReached)
+            if (ProbeRateLimiter.Instance.Sample(probeId))
             {
                 return CreateInvalidatedDebuggerState();
             }

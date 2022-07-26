@@ -124,7 +124,7 @@ namespace Datadog.Trace.Debugger.Instrumentation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static LineDebuggerState BeginLine<TTarget>(string probeId, TTarget instance, RuntimeMethodHandle methodHandle, RuntimeTypeHandle typeHandle, int methodMetadataIndex, int lineNumber, string probeFilePath)
         {
-            if (ProbeRateLimiter.Instance.IsLimitReached)
+            if (ProbeRateLimiter.Instance.Sample(probeId))
             {
                 return CreateInvalidatedLineDebuggerState();
             }

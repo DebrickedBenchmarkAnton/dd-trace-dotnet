@@ -13,6 +13,7 @@ using Datadog.Trace.Configuration;
 using Datadog.Trace.Debugger.Configurations;
 using Datadog.Trace.Debugger.Configurations.Models;
 using Datadog.Trace.Debugger.Helpers;
+using Datadog.Trace.Debugger.Instrumentation;
 using Datadog.Trace.Debugger.Models;
 using Datadog.Trace.Debugger.PInvoke;
 using Datadog.Trace.Debugger.ProbeStatuses;
@@ -201,6 +202,11 @@ namespace Datadog.Trace.Debugger
                 _probeStatusPoller.AddProbes(addedProbes.Select(probe => probe.Id).ToArray());
                 _probeStatusPoller.RemoveProbes(removedProbes.Select(probe => probe.Id).ToArray());
 
+                foreach (var probe in removedProbes)
+                {
+                    ProbeRateLimiter.Instance.ResetRate(probe.Id);    
+                }
+                
                 // This log is checked in integration test
                 Log.Information("Live Debugger.InstrumentProbes: Request to instrument probes definitions completed.");
             }
