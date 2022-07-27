@@ -29,6 +29,12 @@ namespace Datadog.Trace.ContinuousProfiler
             NativeMethods.SetApplicationInfoForAppDomain(runtimeId, serviceName, environment, version);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void SetEndpoint(string runtimeId, ulong traceId, string endpoint)
+        {
+            NativeMethods.SetEndpoint(runtimeId, traceId, endpoint);
+        }
+
         private static class NativeMethods
         {
             [DllImport(dllName: "Datadog.Profiler.Native", EntryPoint = "GetNativeProfilerIsReadyPtr")]
@@ -39,6 +45,9 @@ namespace Datadog.Trace.ContinuousProfiler
 
             [DllImport(dllName: "Datadog.Profiler.Native", EntryPoint = "SetApplicationInfoForAppDomain")]
             public static extern void SetApplicationInfoForAppDomain(string runtimeId, string serviceName, string environment, string version);
+
+            [DllImport(dllName: "Datadog.Profiler.Native", EntryPoint = "SetEndpointForTrace")]
+            public static extern void SetEndpoint(string runtimeId, ulong traceId, string endpoint);
         }
     }
 }

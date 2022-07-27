@@ -71,6 +71,7 @@ private:
     bool _isCpuProfilingEnabled;
     bool _isWallTimeProfilingEnabled;
     bool _isExceptionProfilingEnabled;
+    bool _isEndpointProfilingEnabled;
     bool _debugLogEnabled;
     fs::path _logDirectory;
     fs::path _pprofDirectory;
