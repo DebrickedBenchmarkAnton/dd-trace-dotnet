@@ -317,7 +317,7 @@ partial class Build
             }
             else
             {
-                var (architecture, ext) = GetUnixArchitectureAndExtension();
+                var (architecture, ext) = GetAppSecUnixArchitectureAndExtension();
                 var ddwafFileName = $"libddwaf.{ext}";
 
                 var source = LibDdwafDirectory / "runtimes" / architecture / "native" / ddwafFileName;
@@ -351,7 +351,7 @@ partial class Build
         }
         else
         {
-            var (architecture, ext) = GetUnixArchitectureAndExtension();
+            var (architecture, ext) = GetAppSecUnixArchitectureAndExtension();
             CopyWaf(architecture, targetFrameworks, directory, "libddwaf", ext);
         }
 
@@ -494,7 +494,7 @@ partial class Build
            }
 
            // Move the native file to the architecture-specific folder
-           var (architecture, ext) = GetUnixArchitectureAndExtension();
+           var (architecture, ext) = GetAppSecUnixArchitectureAndExtension();
 
            var profilerFileName = $"{NativeProfilerProject.Name}.{ext}";
            var ddwafFileName = $"libddwaf.{ext}";
@@ -1742,7 +1742,16 @@ partial class Build
 
     private void EnsureResultsDirectory(Project proj) => EnsureCleanDirectory(GetResultsDirectory(proj));
 
-    private (string, string) GetUnixArchitectureAndExtension() => IsOsx ? ("osx-x64", "dylib") : ($"linux-{LinuxArchitectureIdentifier}", "so");
+    private (string, string) GetAppSecUnixArchitectureAndExtension() => IsOsx ? ("osx-x64", "dylib") : ($"linux-{LinuxArchitectureIdentifier}", "so");
+
+    private (string Arch, string Ext) GetUnixArchitectureAndExtension() =>
+        (IsOsx, IsAlpine) switch
+        {
+            (true, _) => ("osx-x64", "dylib"),
+            (false, false) => ($"linux-{LinuxArchitectureIdentifier}", "so"),
+            (false, true) => ($"linux-musl-{LinuxArchitectureIdentifier}", "so"),
+        };
+    
     // the integration tests need their own copy of the profiler, this achieved through build.props on Windows, but doesn't seem to work under Linux
     private void IntegrationTestLinuxProfilerDirFudge(string project)
     {
