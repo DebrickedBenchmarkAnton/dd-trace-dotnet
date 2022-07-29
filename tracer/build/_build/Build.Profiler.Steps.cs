@@ -144,7 +144,7 @@ partial class Build
         .After(CompileProfilerNativeSrc)
         .Executes(() =>
         {
-            var source = ProfilerOutputDirectory / "DDProf-Deploy" / "Datadog.AutoInstrumentation.Profiler.Native.x64.so";
+            var source = ProfilerOutputDirectory / "DDProf-Deploy" / "win-x64" / "Datadog.Profiler.Native.so";
             var dest = ProfilerHomeDirectory;
             Logger.Info($"Copying file '{source}' to 'file {dest}'");
             CopyFileToDirectory(source, dest, FileExistsPolicy.Overwrite);
@@ -163,11 +163,12 @@ partial class Build
         {
             foreach (var architecture in ArchitecturesForPlatform)
             {
-                var source = ProfilerOutputDirectory / "DDProf-Deploy" / $"Datadog.AutoInstrumentation.Profiler.Native.{architecture}.dll";
-                var dest = ProfilerHomeDirectory;
+                var sourceDir = ProfilerOutputDirectory / "DDProf-Deploy" / $"win-{architecture}"; 
+                var source = sourceDir / "Datadog.Profiler.Native.dll";
+                var dest = ProfilerHomeDirectory / $"win-{architecture}";
                 CopyFileToDirectory(source, dest, FileExistsPolicy.Overwrite);
 
-                source = ProfilerOutputDirectory / "DDProf-Deploy" / $"Datadog.AutoInstrumentation.Profiler.Native.{architecture}.pdb";
+                source = sourceDir / "Datadog.Profiler.Native.pdb";
                 dest = SymbolsDirectory / $"win-{architecture}" / Path.GetFileName(source);
                 CopyFile(source, dest, FileExistsPolicy.Overwrite);
             }
