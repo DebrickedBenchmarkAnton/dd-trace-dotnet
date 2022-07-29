@@ -4,7 +4,7 @@
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <?include $(sys.CURRENTDIR)\Config.wxi?>
   <Fragment>
-    <ComponentGroup Id="Tracer.Files.Managed.Net6" Directory="Tracer.net6.0">
+    <ComponentGroup Id="Tracer.Files.Managed.Net6" Directory="INSTALLFOLDER.net6.0">
       <Component Win64="$(var.Win64)">
         <File Id="net60_Datadog.Trace.dll"
               Source="$(var.TracerHomeDirectory)\net6.0\Datadog.Trace.dll"
