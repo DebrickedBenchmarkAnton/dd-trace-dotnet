@@ -131,16 +131,21 @@ namespace Datadog.Trace.TestHelpers
         {
             var monitoringHome = GetMonitoringHomePath();
 
-            string fileName = (EnvironmentTools.GetOS(), EnvironmentTools.GetPlatform()) switch
+            var (extension, dir) = (EnvironmentTools.GetOS(), EnvironmentTools.GetPlatform()) switch
             {
-                ("win", "X64")     => "Datadog.AutoInstrumentation.NativeLoader.x64.dll",
-                ("win", "X86")     => "Datadog.AutoInstrumentation.NativeLoader.x86.dll",
-                ("linux", "X64" or "Arm64") => "Datadog.Trace.ClrProfiler.Native.so",
-                ("osx", _)         => "Datadog.AutoInstrumentation.NativeLoader.dylib",
+                ("win", "X64") => ("dll", "win-x64"),
+                ("win", "X86") => ("dll", "win-x86"),
+                ("linux", "X64") => ("so", null),
+                ("linux", "Arm64") => ("so", null),
+                ("osx", _) => ("dylib", null),
                 _ => throw new PlatformNotSupportedException()
             };
 
-            var path = Path.Combine(monitoringHome, fileName);
+            var fileName = $"Datadog.Trace.ClrProfiler.Native.{extension}";
+
+            var path = dir is null
+                           ? Path.Combine(monitoringHome, fileName)
+                           : Path.Combine(monitoringHome, dir, fileName);
 
             if (!File.Exists(path))
             {
