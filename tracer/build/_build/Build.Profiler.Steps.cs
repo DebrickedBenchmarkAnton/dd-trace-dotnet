@@ -144,14 +144,12 @@ partial class Build
         .After(CompileProfilerNativeSrc)
         .Executes(() =>
         {
-            var source = ProfilerOutputDirectory / "DDProf-Deploy" / "win-x64" / "Datadog.Profiler.Native.so";
+            var source = ProfilerOutputDirectory / "DDProf-Deploy" / "Datadog.Profiler.Native.so";
             var dest = ProfilerHomeDirectory;
-            Logger.Info($"Copying file '{source}' to 'file {dest}'");
             CopyFileToDirectory(source, dest, FileExistsPolicy.Overwrite);
 
             source = ProfilerOutputDirectory / "DDProf-Deploy" / "Datadog.Linux.ApiWrapper.x64.so";
             dest = ProfilerHomeDirectory;
-            Logger.Info($"Copying file '{source}' to 'file {dest}'");
             CopyFileToDirectory(source, dest, FileExistsPolicy.Overwrite);
         });
 
