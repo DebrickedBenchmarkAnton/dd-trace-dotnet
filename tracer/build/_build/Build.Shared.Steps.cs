@@ -84,16 +84,19 @@ partial class Build
                 var source = NativeLoaderProject.Directory / "bin" / BuildConfiguration / architecture.ToString() /
                              "loader.conf";
                 var dest = MonitoringHomeDirectory / archFolder;
-                CopyFileToDirectory(source, MonitoringHomeDirectory / archFolder);
+                // not sure why we need the overwrite here, needs looking into
+                CopyFileToDirectory(source, dest, FileExistsPolicy.Overwrite);
 
                 source = NativeLoaderProject.Directory / "bin" / BuildConfiguration / architecture.ToString() /
                              $"{NativeLoaderProject.Name}.dll";
                 dest = MonitoringHomeDirectory / archFolder;
+                // not sure why we need the overwrite here, needs looking into
                 CopyFileToDirectory(source, dest);
 
                 source = NativeLoaderProject.Directory / "bin" / BuildConfiguration / architecture.ToString() /
                              $"{NativeLoaderProject.Name}.pdb";
                 dest = SymbolsDirectory / archFolder;
+                // not sure why we need the overwrite here, needs looking into
                 CopyFileToDirectory(source, dest);
             }
         });
