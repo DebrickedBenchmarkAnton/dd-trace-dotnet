@@ -83,7 +83,7 @@ partial class Build
                 // Copy native loader assets
                 var source = NativeLoaderProject.Directory / "bin" / BuildConfiguration / architecture.ToString() /
                              "loader.conf";
-                var dest = MonitoringHomeDirectory;
+                var dest = MonitoringHomeDirectory / archFolder;
                 CopyFileToDirectory(source, MonitoringHomeDirectory / archFolder);
 
                 source = NativeLoaderProject.Directory / "bin" / BuildConfiguration / architecture.ToString() /
