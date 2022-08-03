@@ -13,9 +13,11 @@ using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using Datadog.Trace.Agent;
 using Datadog.Trace.Agent.Transports;
 using Datadog.Trace.Ci.Configuration;
+using Datadog.Trace.Ci.Tags;
 using Datadog.Trace.Configuration;
 using Datadog.Trace.Logging;
 using Datadog.Trace.Util;
@@ -28,7 +30,8 @@ namespace Datadog.Trace.Ci;
 /// </summary>
 internal class ITRClient
 {
-    private const string ApiKeyHeader = "dd-api-key";
+    private const string ApiKeyHeader = "DD-API-KEY";
+    private const string ApplicationKeyHeader = "DD-APPLICATION-KEY";
     private const int MaxRetries = 3;
     private const int MaxPackFileSizeInMb = 3;
 
@@ -41,6 +44,7 @@ internal class ITRClient
     private readonly IApiRequestFactory _apiRequestFactory;
     private readonly Uri _searchCommitsUrl;
     private readonly Uri _packFileUrl;
+    private readonly Uri _skippeableTestsUrl;
     private readonly Task<string> _getRepositoryUrlTask;
 
     public ITRClient(string workingDirectory, CIVisibilitySettings settings = null)
@@ -51,6 +55,9 @@ internal class ITRClient
         _workingDirectory = workingDirectory;
         _getRepositoryUrlTask = GetRepositoryUrlAsync();
         _apiRequestFactory = CIVisibility.GetRequestFactory(_settings.TracerSettings.Build());
+
+        var environment = _settings.TracerSettings.Environment;
+        var serviceName = _settings.TracerSettings.ServiceName;
 
         var agentlessUrl = _settings.AgentlessUrl;
         if (!string.IsNullOrWhiteSpace(agentlessUrl))
@@ -63,6 +70,11 @@ internal class ITRClient
             _packFileUrl = new UriBuilder(agentlessUrl)
             {
                 Path = "api/v2/git/repository/packfile"
+            }.Uri;
+
+            _skippeableTestsUrl = new UriBuilder(agentlessUrl)
+            {
+                Path = $"api/v2/ci/environment/{HttpUtility.UrlEncode(environment)}/service/{HttpUtility.UrlEncode(serviceName)}/tests/skippable"
             }.Uri;
         }
         else
@@ -78,6 +90,12 @@ internal class ITRClient
                 host: "api." + _settings.Site,
                 port: 443,
                 pathValue: "api/v2/git/repository/packfile").Uri;
+
+            _skippeableTestsUrl = new UriBuilder(
+                scheme: "https",
+                host: "api." + _settings.Site,
+                port: 443,
+                pathValue: $"api/v2/ci/environment/{HttpUtility.UrlEncode(environment)}/service/{HttpUtility.UrlEncode(serviceName)}/tests/skippable").Uri;
         }
     }
 
@@ -93,6 +111,28 @@ internal class ITRClient
 
         var remoteCommitsData = await SearchCommitAsync(localCommits).ConfigureAwait(false);
         return await SendObjectsPackFileAsync(localCommits[0], remoteCommitsData).ConfigureAwait(false);
+    }
+
+    public async Task GetSkippeableTestsAsync()
+    {
+        Log.Debug("ITR: Getting skippeable tests...");
+        var framework = FrameworkDescription.Instance;
+        var skippeableUrl = new UriBuilder(_skippeableTestsUrl);
+        var repository = await _getRepositoryUrlTask.ConfigureAwait(false);
+        var currentSha = await ProcessHelpers.RunCommandAsync(new ProcessHelpers.Command("git", "rev-parse HEAD", _workingDirectory)).ConfigureAwait(false);
+        currentSha = currentSha.Replace("\n", string.Empty);
+        skippeableUrl.Query = $"repository_url={HttpUtility.UrlEncode(repository)}&" +
+                              $"sha={currentSha}&" +
+                              $"{CommonTags.OSArchitecture}={HttpUtility.UrlEncode(framework.OSArchitecture)}&" +
+                              $"{CommonTags.OSPlatform}={HttpUtility.UrlEncode(framework.OSPlatform)}&" +
+                              $"{CommonTags.OSVersion}={HttpUtility.UrlEncode(Environment.OSVersion.VersionString)}&" +
+                              $"{CommonTags.RuntimeName}={HttpUtility.UrlEncode(framework.Name)}&" +
+                              $"{CommonTags.RuntimeVersion}={HttpUtility.UrlEncode(framework.ProductVersion)}&" +
+                              $"{CommonTags.RuntimeArchitecture}={HttpUtility.UrlEncode(framework.ProcessArchitecture)}";
+        Log.Warning("ITR: {url}", skippeableUrl.Uri.ToString());
+        var request = _apiRequestFactory.Create(skippeableUrl.Uri);
+        request.AddHeader(ApiKeyHeader, _settings.ApiKey);
+        request.AddHeader(ApplicationKeyHeader, _settings.ApplicationKey);
     }
 
     private async Task<string[]> SearchCommitAsync(string[] localCommits)

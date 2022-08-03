@@ -84,6 +84,7 @@ namespace Datadog.Trace.Ci
                 {
                     var itrClient = new ITRClient(CIEnvironmentValues.Instance.WorkspacePath, _settings);
                     await itrClient.UploadRepositoryChangesAsync().ConfigureAwait(false);
+                    await itrClient.GetSkippeableTestsAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
