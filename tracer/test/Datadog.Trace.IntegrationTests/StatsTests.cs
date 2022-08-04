@@ -91,7 +91,7 @@ namespace Datadog.Trace.IntegrationTests
 
             var tracer = new Tracer(settings, agentWriter: null, sampler: null, scopeManager: null, statsd: null);
 
-            // Scenario 1: Send server span with 200 status code (success)
+            // Scenario 1: Send server span with 200 status code (success). This is a unique stats point so this trace is kept
             Span span1;
             using (var scope = tracer.StartActiveInternal("operationName", finishOnClose: finishSpansOnClose))
             {
@@ -102,41 +102,43 @@ namespace Datadog.Trace.IntegrationTests
             }
 
             await tracer.FlushAsync();
-            if (expectStats)
-            {
-                statsWaitEvent.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for stats");
-            }
-            else
-            {
-                statsWaitEvent.WaitOne(TimeSpan.FromSeconds(10)).Should().Be(false, "No stats should be received");
-            }
+            WaitForStats(statsWaitEvent, expectStats);
+            WaitForTraces(tracesWaitEvent, finishSpansOnClose); // The first span is unique, so we expect to receive it as long as it closed
 
-            if (expectAllTraces && finishSpansOnClose)
-            {
-                tracesWaitEvent.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for traces");
-            }
-            else
-            {
-                tracesWaitEvent.WaitOne(TimeSpan.FromSeconds(2)).Should().Be(false, "No traces should be received");
-            }
-
-            // Scenario 2: Send server span with 500 status code (error)
+            // Scenario 2: Send the same server span as before, but it is not an error and it is not a new point,
+            // so this trace can be dropped when ClientDropP0s is true
             Span span2;
             using (var scope = tracer.StartActiveInternal("operationName", finishOnClose: finishSpansOnClose))
             {
                 span2 = scope.Span;
                 span2.ResourceName = "resourceName";
-                span2.SetHttpStatusCode(500, isServer: true, immutableSettings);
-                span2.Type = "span2";
+                span2.SetHttpStatusCode(200, isServer: true, immutableSettings);
+                span2.Type = "span1";
             }
 
             await tracer.FlushAsync();
+            WaitForStats(statsWaitEvent, expectStats);
+            WaitForTraces(tracesWaitEvent, expectAllTraces && finishSpansOnClose);
+
+            // Scenario 3: Send server span with 200 status code but with an error
+            Span span3;
+            using (var scope = tracer.StartActiveInternal("operationName", finishOnClose: finishSpansOnClose))
+            {
+                span3 = scope.Span;
+                span3.ResourceName = "resourceName";
+                span3.SetHttpStatusCode(200, isServer: true, immutableSettings);
+                span3.Type = "span1";
+                span3.Error = true;
+            }
+
+            await tracer.FlushAsync();
+            WaitForStats(statsWaitEvent, expectStats);
+            WaitForTraces(tracesWaitEvent, finishSpansOnClose); // The last span was an error, so we expect to receive it as long as it closed
+
             if (expectStats)
             {
-                statsWaitEvent.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for stats");
-
-                var payload = agent.WaitForStats(2);
-                payload.Should().HaveCount(2);
+                var payload = agent.WaitForStats(3);
+                payload.Should().HaveCount(3);
                 statsReceived.Should().BeTrue();
 
                 var stats1 = payload[0];
@@ -145,22 +147,15 @@ namespace Datadog.Trace.IntegrationTests
 
                 var stats2 = payload[1];
                 stats2.Sequence.Should().Be(2);
-                AssertStats(stats2, span2, isError: true);
-            }
-            else
-            {
-                statsWaitEvent.WaitOne(TimeSpan.FromSeconds(10)).Should().Be(false, "No stats should be received");
-                statsReceived.Should().BeFalse();
-            }
+                AssertStats(stats2, span2, isError: false);
 
-            // For the error span, we should always send them (when they get closed of course)
-            if (finishSpansOnClose)
-            {
-                tracesWaitEvent.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for traces");
+                var stats3 = payload[2];
+                stats3.Sequence.Should().Be(3);
+                AssertStats(stats3, span3, isError: true);
             }
             else
             {
-                tracesWaitEvent.WaitOne(TimeSpan.FromSeconds(2)).Should().Be(false, "No traces should be received");
+                statsReceived.Should().BeFalse();
             }
 
             // Assert header values
@@ -172,13 +167,37 @@ namespace Datadog.Trace.IntegrationTests
             }
             else if (headersAlwaysZeroes)
             {
-                droppedP0TracesHeaderValues.Should().BeEquivalentTo(new string[] { "0", "0" });
-                droppedP0SpansHeaderValues.Should().BeEquivalentTo(new string[] { "0", "0" });
+                droppedP0TracesHeaderValues.Should().BeEquivalentTo(new string[] { "0", "0", "0" });
+                droppedP0SpansHeaderValues.Should().BeEquivalentTo(new string[] { "0", "0", "0" });
             }
             else
             {
-                droppedP0TracesHeaderValues.Should().BeEquivalentTo(new string[] { "1" });
-                droppedP0SpansHeaderValues.Should().BeEquivalentTo(new string[] { "1" });
+                droppedP0TracesHeaderValues.Should().BeEquivalentTo(new string[] { "0", "1" });
+                droppedP0SpansHeaderValues.Should().BeEquivalentTo(new string[] { "0", "1" });
+            }
+
+            void WaitForTraces(AutoResetEvent e, bool expected)
+            {
+                if (expected)
+                {
+                    e.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for traces");
+                }
+                else
+                {
+                    e.WaitOne(TimeSpan.FromSeconds(2)).Should().Be(false, "No traces should be received");
+                }
+            }
+
+            void WaitForStats(AutoResetEvent e, bool expected)
+            {
+                if (expected)
+                {
+                    e.WaitOne(TimeSpan.FromMinutes(1)).Should().Be(true, "timeout while waiting for stats");
+                }
+                else
+                {
+                    e.WaitOne(TimeSpan.FromSeconds(10)).Should().Be(false, "No stats should be received");
+                }
             }
 
             void AssertStats(MockClientStatsPayload stats, Span span, bool isError)
