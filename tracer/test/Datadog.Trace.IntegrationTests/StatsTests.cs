@@ -19,6 +19,8 @@ namespace Datadog.Trace.IntegrationTests
 {
     public class StatsTests
     {
+        private const int StatsComputationIntervalSeconds = 3;
+
         [Fact]
         public async Task SendStats()
         {
@@ -79,6 +81,7 @@ namespace Datadog.Trace.IntegrationTests
             {
                 GlobalSamplingRate = globalSamplingRate,
                 StatsComputationEnabled = statsComputationEnabled,
+                StatsComputationInterval = StatsComputationIntervalSeconds,
                 ServiceVersion = "V",
                 Environment = "Test",
                 Exporter = new ExporterSettings
@@ -196,7 +199,7 @@ namespace Datadog.Trace.IntegrationTests
                 }
                 else
                 {
-                    e.WaitOne(TimeSpan.FromSeconds(10)).Should().Be(false, "No stats should be received");
+                    e.WaitOne(TimeSpan.FromSeconds(StatsComputationIntervalSeconds)).Should().Be(false, "No stats should be received");
                 }
             }
 
@@ -213,7 +216,7 @@ namespace Datadog.Trace.IntegrationTests
 
                 var bucket = stats.Stats[0];
                 bucket.AgentTimeShift.Should().Be(0);
-                bucket.Duration.Should().Be(TimeSpan.FromSeconds(10).ToNanoseconds());
+                bucket.Duration.Should().Be(TimeSpan.FromSeconds(StatsComputationIntervalSeconds).ToNanoseconds());
                 bucket.Start.Should().NotBe(0);
 
                 bucket.Stats.Should().HaveCount(1);
