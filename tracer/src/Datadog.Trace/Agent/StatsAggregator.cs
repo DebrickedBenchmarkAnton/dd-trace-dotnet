@@ -4,12 +4,14 @@
 // </copyright>
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Datadog.Trace.Agent.DiscoveryService;
 using Datadog.Trace.Configuration;
 using Datadog.Trace.ExtensionMethods;
 using Datadog.Trace.Logging;
 using Datadog.Trace.PlatformHelpers;
+using Datadog.Trace.Processors;
 
 namespace Datadog.Trace.Agent
 {
@@ -26,6 +28,7 @@ namespace Datadog.Trace.Agent
         private readonly IApi _api;
         private readonly IDiscoveryService _discoveryService;
         private readonly Task _initializationTask;
+        private readonly ITraceProcessor[] _traceProcessors;
 
         private readonly TaskCompletionSource<bool> _processExit;
 
@@ -42,6 +45,12 @@ namespace Datadog.Trace.Agent
             _processExit = new TaskCompletionSource<bool>();
             _bucketDuration = bucketDuration;
             _buffers = new StatsBuffer[BufferCount];
+            _traceProcessors = new ITraceProcessor[]
+            {
+                new Processors.NormalizerTraceProcessor(),
+                // new Trace.Processors.TruncatorTraceProcessor(),
+                // new Processors.OriginTagTraceProcessor(settings.Exporter.PartialFlushEnabled, agentWriter is CIAgentlessWriter),
+            };
 
             var header = new ClientStatsPayload
             {
@@ -103,6 +112,30 @@ namespace Datadog.Trace.Agent
                     }
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ArraySegment<Span> ProcessTrace(ArraySegment<Span> trace)
+        {
+            if (CanComputeStats == true || CanComputeStats is null)
+            {
+                foreach (var processor in _traceProcessors)
+                {
+                    if (processor is not null)
+                    {
+                        try
+                        {
+                            trace = processor.Process(trace);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, e.Message);
+                        }
+                    }
+                }
+            }
+
+            return trace;
         }
 
         internal static StatsAggregationKey BuildKey(Span span)

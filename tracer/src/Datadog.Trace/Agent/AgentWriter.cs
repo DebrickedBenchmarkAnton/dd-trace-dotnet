@@ -384,6 +384,7 @@ namespace Datadog.Trace.Agent
                 return null;
             }
 
+            trace = _statsAggregator?.ProcessTrace(trace) ?? trace;
             _statsAggregator?.AddRange(trace.Array, trace.Offset, trace.Count);
 
             // If stats computation determined that we should drop the P0 Trace,
