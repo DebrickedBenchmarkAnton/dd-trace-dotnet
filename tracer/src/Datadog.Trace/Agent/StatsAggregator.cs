@@ -48,8 +48,7 @@ namespace Datadog.Trace.Agent
             _traceProcessors = new ITraceProcessor[]
             {
                 new Processors.NormalizerTraceProcessor(),
-                // new Trace.Processors.TruncatorTraceProcessor(),
-                // new Processors.OriginTagTraceProcessor(settings.Exporter.PartialFlushEnabled, agentWriter is CIAgentlessWriter),
+                new Processors.ObfuscatorTraceProcessor(false),
             };
 
             var header = new ClientStatsPayload
