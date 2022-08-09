@@ -109,7 +109,7 @@ namespace Datadog.Trace.Util
             while (!processInfo.HasExited)
             {
                 output += await processInfo.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-                await Task.Delay(1).ConfigureAwait(false);
+                await Task.Delay(10).ConfigureAwait(false);
             }
 
             output += await processInfo.StandardOutput.ReadToEndAsync().ConfigureAwait(false);

@@ -42,6 +42,9 @@ namespace Datadog.Trace.Ci.Configuration
 
             // Git upload
             GitUploadEnabled = source?.GetBool(ConfigurationKeys.CIVisibility.GitUploadEnabled) ?? false;
+
+            // Intelligent Test Runner
+            IntelligentTestRunnerEnabled = source?.GetBool(ConfigurationKeys.CIVisibility.IntelligentTestRunnerEnabled) ?? false;
         }
 
         /// <summary>
@@ -108,6 +111,11 @@ namespace Datadog.Trace.Ci.Configuration
         /// Gets a value indicating whether the Git Upload metadata is going to be used.
         /// </summary>
         public bool GitUploadEnabled { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the Intelligent Test Runner is enabled.
+        /// </summary>
+        public bool IntelligentTestRunnerEnabled { get; }
 
         /// <summary>
         /// Gets the tracer settings
