@@ -53,7 +53,7 @@ namespace Datadog.Trace.DiagnosticListeners
             catch (Exception ex)
             {
                 Log.Error(ex, "Event Exception: {EventName}", value.Key);
-                if (ex is Datadog.Trace.AppSec.Transports.BlockException)
+                if (ex is Datadog.Trace.AppSec.BlockException)
                 {
                     throw;
                 }
