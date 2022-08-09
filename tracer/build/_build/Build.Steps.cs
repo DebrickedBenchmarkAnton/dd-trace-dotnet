@@ -642,7 +642,7 @@ partial class Build
 
                 var tracerNativeFile = MonitoringHomeDirectory / "Datadog.Tracer.Native.so";
                 var newTracerNativeFile = MonitoringHomeDirectory / "tracer" / "Datadog.Tracer.Native.so";
-                MoveFile(tracerNativeFile, newTracerNativeFile);
+                MoveFile(tracerNativeFile, newTracerNativeFile, FileExistsPolicy.OverwriteIfNewer);
 
                 // somehow the permissions are lost along the way, ensure they are correctly set here
                 var createLogPathScript = MonitoringHomeDirectory / "createLogPath.sh";
