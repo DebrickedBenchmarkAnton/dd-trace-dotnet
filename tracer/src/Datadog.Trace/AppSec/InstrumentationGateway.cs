@@ -104,7 +104,7 @@ namespace Datadog.Trace.AppSec
             }
         }
 
-        internal void RaiseBlockingOpportunity(HttpContext context, Scope scope, ImmutableTracerSettings tracerSettings, Action<InstrumentationGatewayBlockingEventArgs> doBeforeActualBlocking)
+        internal void RaiseBlockingOpportunity(HttpContext context, Scope scope, ImmutableTracerSettings tracerSettings, Action<InstrumentationGatewayBlockingEventArgs> doBeforeActualBlocking = null)
         {
             if (BlockingOpportunity == null)
             {

@@ -777,9 +777,7 @@ namespace Datadog.Trace.DiagnosticListeners
                 {
                     security.InstrumentationGateway.RaisePathParamsAvailable(httpContext, span, routeValues);
                     security.InstrumentationGateway.RaiseBlockingOpportunity(httpContext, tracer.InternalActiveScope, tracer.Settings, args =>
-                    {
-                        DoBeforeRequestStops(args.Context, args.Scope, args.TracerSettings);
-                    });
+                        DoBeforeRequestStops(args.Context, args.Scope, args.TracerSettings));
                 }
             }
         }
@@ -921,15 +919,16 @@ namespace Datadog.Trace.DiagnosticListeners
                     statusCode = badRequestException.StatusCode;
                 }
 
+                // Generic unhandled exceptions are converted to 500 errors by Kestrel
+                span.SetHttpStatusCode(statusCode: statusCode, isServer: true, tracer.Settings);
+
                 var security = CurrentSecurity;
-                if (security.Settings.Enabled)
+                if (security.Settings.Enabled && unhandledStruct.Exception is not BlockException)
                 {
                     var httpContext = unhandledStruct.HttpContext;
                     security.InstrumentationGateway.RaiseRequestStart(httpContext, httpContext.Request, span);
+                    security.InstrumentationGateway.RaiseBlockingOpportunity(httpContext, tracer.InternalActiveScope, tracer.Settings);
                 }
-
-                // Generic unhandled exceptions are converted to 500 errors by Kestrel
-                span.SetHttpStatusCode(statusCode: statusCode, isServer: true, tracer.Settings);
             }
         }
 

@@ -19,7 +19,7 @@ namespace Datadog.Trace.AppSec
 {
     internal class InstrumentationGatewayBlockingEventArgs : EventArgs
     {
-        internal InstrumentationGatewayBlockingEventArgs(HttpContext context, Scope scope, ImmutableTracerSettings settings, Action<InstrumentationGatewayBlockingEventArgs> doBeforeBlocking)
+        internal InstrumentationGatewayBlockingEventArgs(HttpContext context, Scope scope, ImmutableTracerSettings settings, Action<InstrumentationGatewayBlockingEventArgs> doBeforeBlocking = null)
         {
             Context = context;
             Scope = scope;
