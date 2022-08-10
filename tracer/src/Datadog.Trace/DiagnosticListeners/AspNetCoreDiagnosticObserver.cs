@@ -180,6 +180,7 @@ namespace Datadog.Trace.DiagnosticListeners
         protected override void OnNext(string eventName, object arg)
         {
             var lastChar = eventName[eventName.Length - 1];
+
             if (lastChar == 't')
             {
                 if (ReferenceEquals(eventName, _hostingHttpRequestInStartEventKey))
@@ -582,6 +583,28 @@ namespace Datadog.Trace.DiagnosticListeners
             return span;
         }
 
+        private static void DoBeforeRequestStops(HttpContext httpContext, Scope scope, ImmutableTracerSettings tracerSettings)
+        {
+            var span = scope.Span;
+            var isMissingHttpStatusCode = !span.HasHttpStatusCode();
+
+            if (string.IsNullOrEmpty(span.ResourceName) || isMissingHttpStatusCode)
+            {
+                if (string.IsNullOrEmpty(span.ResourceName))
+                {
+                    span.ResourceName = AspNetCoreRequestHandler.GetDefaultResourceName(httpContext.Request);
+                }
+
+                if (isMissingHttpStatusCode)
+                {
+                    span.SetHttpStatusCode(httpContext.Response.StatusCode, isServer: true, tracerSettings);
+                }
+            }
+
+            span.SetHeaderTags(new HeadersCollectionAdapter(httpContext.Response.Headers), tracerSettings.HeaderTags, defaultTagPrefix: SpanContextPropagator.HttpResponseHeadersTagPrefix);
+            scope.Dispose();
+        }
+
         private void OnHostingHttpRequestInStart(object arg)
         {
             var tracer = CurrentTracer;
@@ -600,11 +623,13 @@ namespace Datadog.Trace.DiagnosticListeners
                 HttpContext httpContext = requestStruct.HttpContext;
                 HttpRequest request = httpContext.Request;
                 Span span = null;
+                Scope scope = null;
                 if (shouldTrace)
                 {
                     // Use an empty resource name here, as we will likely replace it as part of the request
                     // If we don't, update it in OnHostingHttpRequestInStop or OnHostingUnhandledException
-                    span = AspNetCoreRequestHandler.StartAspNetCorePipelineScope(tracer, httpContext, httpContext.Request, resourceName: string.Empty).Span;
+                    scope = AspNetCoreRequestHandler.StartAspNetCorePipelineScope(tracer, httpContext, httpContext.Request, resourceName: string.Empty);
+                    span = scope.Span;
                 }
 
                 if (shouldSecure)
@@ -617,6 +642,7 @@ namespace Datadog.Trace.DiagnosticListeners
                        });
 
                     security.InstrumentationGateway.RaiseRequestStart(httpContext, request, span);
+                    security.InstrumentationGateway.RaiseBlockingOpportunity(httpContext, scope, tracer.Settings, (args) => DoBeforeRequestStops(args.Context, args.Scope, args.TracerSettings));
                 }
             }
         }
@@ -750,7 +776,10 @@ namespace Datadog.Trace.DiagnosticListeners
                 if (shouldSecure)
                 {
                     security.InstrumentationGateway.RaisePathParamsAvailable(httpContext, span, routeValues);
-                    security.InstrumentationGateway.RaiseBlockingOpportunity(httpContext);
+                    security.InstrumentationGateway.RaiseBlockingOpportunity(httpContext, tracer.InternalActiveScope, tracer.Settings, args =>
+                    {
+                        DoBeforeRequestStops(args.Context, args.Scope, args.TracerSettings);
+                    });
                 }
             }
         }
@@ -861,30 +890,13 @@ namespace Datadog.Trace.DiagnosticListeners
 
             if (scope != null)
             {
-                var span = scope.Span;
-
                 // We may need to update the resource name if none of the routing/mvc events updated it.
                 // If we had an unhandled exception, the status code will already be updated correctly,
                 // but if the span was manually marked as an error, we still need to record the status code
-                var isMissingHttpStatusCode = !span.HasHttpStatusCode();
                 var httpRequest = arg.DuckCast<HttpRequestInStopStruct>();
                 HttpContext httpContext = httpRequest.HttpContext;
 
-                if (string.IsNullOrEmpty(span.ResourceName) || isMissingHttpStatusCode)
-                {
-                    if (string.IsNullOrEmpty(span.ResourceName))
-                    {
-                        span.ResourceName = AspNetCoreRequestHandler.GetDefaultResourceName(httpContext.Request);
-                    }
-
-                    if (isMissingHttpStatusCode)
-                    {
-                        span.SetHttpStatusCode(httpContext.Response.StatusCode, isServer: true, tracer.Settings);
-                    }
-                }
-
-                span.SetHeaderTags(new HeadersCollectionAdapter(httpContext.Response.Headers), tracer.Settings.HeaderTags, defaultTagPrefix: SpanContextPropagator.HttpResponseHeadersTagPrefix);
-                scope.Dispose();
+                DoBeforeRequestStops(httpContext, scope, tracer.Settings);
             }
         }
 
