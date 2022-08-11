@@ -86,6 +86,80 @@ partial class Build
             Console.WriteLine($"PR assigned");
         });
 
+    Target SummaryOfSnapshotChanges => _ => _
+           .Unlisted()
+           .Requires(() => GitHubRepositoryName)
+           .Requires(() => GitHubToken)
+           .Requires(() => PullRequestNumber)
+           .Executes(async() =>
+            {
+                var client = GetGitHubClient();
+
+                var pr = await client.PullRequest.Get(
+                    owner: GitHubRepositoryOwner,
+                    name: GitHubRepositoryName,
+                    number: PullRequestNumber.Value);
+
+                // Fixes an issue (ambiguous argument) when we do git diff in the Action.
+                GitTasks.Git("fetch origin master:master", logOutput: false);
+
+                // This is a dumb implementation that just show the diff
+                // We could imagine getting the whole context with -U1000 and show the differences including parent name
+                // eg now we show -oldAttribute: oldValue, but we could show -tag.oldattribute: oldvalue
+                var changes = GitTasks.Git("diff master -- tracer/test/snapshots")
+                                   .Select(f => f.Text);
+
+
+                const int minFiles = 1;
+                if (changes.Where(f => f.Contains("@@ ")).Count() < minFiles)
+                {
+                    // Dumb early exit, if we modify less than 50 files, we can review them manually
+                    // Also it's certainly an addition of snapshot tests, so may not make sense to print a summary.
+                    Console.WriteLine("Not doing snapshots diff for less than ${minFiles}.");
+                    return;
+                }
+
+                var diffs = new Dictionary<string, int>();
+                StringBuilder diffInFile = new();
+                foreach (var diff in changes)
+                {
+                    if (diff.StartsWith("@@")) // new file
+                    {
+                        if (diffInFile.Length > 0)
+                        {
+                            var s = diffInFile.ToString();
+                            diffs.TryAdd(s, 0);
+                            diffs[s]++;
+                        }
+                        diffInFile.Clear();
+                        continue;
+                    }
+
+                    if (diff.StartsWith("- ") || diff.StartsWith("+ "))
+                    {
+                        diffInFile.AppendLine(diff);
+                    }
+                }
+
+                if (diffInFile.Length > 0)
+                {
+                    var s = diffInFile.ToString();
+                    diffs.TryAdd(s, 0);
+                    diffs[s]++;
+                }
+
+                var markdown = new StringBuilder();
+                markdown.AppendLine("## Snapshots difference report").AppendLine();
+                markdown.AppendLine("The following differences have been observed in snapshots. So diff is simplistic, so please check some files anyway while we improve it.").AppendLine();
+                foreach (var diff in diffs)
+                {
+                    markdown.AppendLine(diff.Value + " occurences of : ");
+                    markdown.AppendLine(diff.Key).AppendLine();
+                }
+
+                await PostCommentToPullRequest(PullRequestNumber.Value, markdown.ToString());
+            });
+
     Target AssignLabelsToPullRequest => _ => _
        .Unlisted()
        .Requires(() => GitHubRepositoryName)
