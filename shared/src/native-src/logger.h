@@ -3,6 +3,9 @@
 #include <memory>
 #include <regex>
 #include <sstream>
+#ifdef MACOS
+#include <iostream>
+#endif
 
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -102,7 +105,9 @@ std::shared_ptr<spdlog::logger> Logger::CreateInternalLogger()
         // By writing into the stderr was changing the behavior in a CI scenario.
         // There's not a good way to report errors when trying to create the log file.
         // But we never should be changing the normal behavior of an app.
-        // std::cerr << "LoggerImpl Handler: " << msg << std::endl;
+#ifdef MACOS
+        std::cerr << "LoggerImpl Handler: " << msg << std::endl;
+#endif
     });
 
     spdlog::flush_every(std::chrono::seconds(3));
@@ -116,12 +121,14 @@ std::shared_ptr<spdlog::logger> Logger::CreateInternalLogger()
         logger =
             spdlog::rotating_logger_mt("Logger", Logger::GetLogPath<LoggerPolicy>(file_name_suffix), 1048576 * 5, 10);
     }
-    catch (...)
+    catch (const std::exception& exception)
     {
         // By writing into the stderr was changing the behavior in a CI scenario.
         // There's not a good way to report errors when trying to create the log file.
         // But we never should be changing the normal behavior of an app.
-        // std::cerr << "LoggerImpl Handler: Error creating native log file." << std::endl;
+#ifdef MACOS
+        std::cerr << "LoggerImpl Handler: Error creating native log file." << exception.what() << std::endl;
+#endif
         logger = spdlog::null_logger_mt("LoggerImpl");
     }
 
