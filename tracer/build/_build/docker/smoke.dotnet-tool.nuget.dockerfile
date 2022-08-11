@@ -22,7 +22,7 @@ ARG INSTALL_CMD
 RUN mkdir -p /opt/datadog \
     && mkdir -p /var/log/datadog \
     && mkdir -p /tool \
-    && cp /app/install/* /tool \
+    && dotnet tool install -g dd-trace --tool-path /tool --add-source /app/install/. \
     && rm -rf /app/install
 
 # Set the optional env vars
@@ -35,4 +35,4 @@ ENV DD_PROFILING_LOG_DIR=/var/log/datadog/dotnet
 # Copy the app across
 COPY --from=builder /src/publish /app/.
 
-ENTRYPOINT ["dd-trace", "dotnet", "/app/AspNetCoreSmokeTest.dll"]
+ENTRYPOINT ["/tool/dd-trace", "dotnet", "/app/AspNetCoreSmokeTest.dll"]
